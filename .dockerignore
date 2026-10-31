@@ -1,0 +1,9 @@
+.claude
+.git
+.env
+target
+data
+docs
+*.md
+.idea
+.vscode

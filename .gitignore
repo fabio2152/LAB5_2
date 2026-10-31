@@ -1,0 +1,22 @@
+# Claude Code / herramientas locales
+.claude/
+CLAUDE.md
+
+# Secretos
+.env
+*.pem
+
+# Maven / Java
+target/
+*.class
+*.log
+
+# Archivos generados por la app
+data/
+
+# IDEs y SO
+.idea/
+*.iml
+.vscode/
+.DS_Store
+Thumbs.db

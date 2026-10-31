@@ -1,0 +1,24 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:test;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+
+app:
+  storage-dir: ${java.io.tmpdir}/marketing-ai-test
+  public-base-url: http://localhost:8080
+  ffmpeg-path: ffmpeg
+  claude:
+    api-key: ""
+    model: claude-opus-5-5
+  s3:
+    bucket: ""
+    region: us-east-1
+    public-url: ""
+  instagram:
+    access-token: ""
+    user-id: ""
+    graph-url: https://graph.instagram.com/v23.0

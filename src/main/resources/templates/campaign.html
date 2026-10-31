@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head th:replace="~{fragments :: head(${campaign.companyName})}"></head>
+<body>
+<header th:replace="~{fragments :: header}"></header>
+
+<main class="container" th:with="selected=${campaign.selectedScript.orElse(null)}, video=${campaign.video.orElse(null)}">
+    <a class="back" th:href="@{/}">← Volver</a>
+
+    <section class="campaign-head card">
+        <img class="original" th:src="@{/media/{id}/{f}(id=${campaign.id},f=${campaign.originalImage})}" alt="Foto original">
+        <div>
+            <span class="status" th:classappend="${#strings.toLowerCase(campaign.status)}" th:text="${campaign.status.label}"></span>
+            <h1 th:text="${campaign.companyName}">Empresa</h1>
+            <p th:text="${campaign.productSummary}">Resumen</p>
+            <p class="muted" th:if="${campaign.targetAudience}">Público: <span th:text="${campaign.targetAudience}"></span></p>
+            <ol class="steps compact">
+                <li class="done"><span>1</span>Foto</li>
+                <li class="done"><span>2</span>Guiones</li>
+                <li th:classappend="${selected != null} ? 'done' : 'active'"><span>3</span>Elegir</li>
+                <li th:classappend="${campaign.status.name() == 'PUBLISHED'} ? 'done' : (${selected != null} ? 'active' : '')"><span>4</span>Generar y publicar</li>
+            </ol>
+        </div>
+    </section>
+
+    <div th:replace="~{fragments :: alerts}"></div>
+    <div class="alert error" th:if="${campaign.demoMode}">
+        Guiones de ejemplo (modo demo). Configura <code>ANTHROPIC_API_KEY</code> para que Claude analice la foto.
+    </div>
+
+    <h2>Paso 2 · Elige uno de los 3 guiones</h2>
+    <div class="scripts">
+        <article class="card script" th:each="s : ${campaign.scripts}" th:classappend="${s.selected} ? 'selected'"
+                 th:style="'--accent:' + ${s.accentColor}">
+            <header>
+                <span class="number" th:text="${s.position}">1</span>
+                <div>
+                    <h3 th:text="${s.title}">Título</h3>
+                    <small th:text="${s.angle}">Enfoque</small>
+                </div>
+            </header>
+            <p class="hook">“<span th:text="${s.hook}"></span>”</p>
+            <dl>
+                <dt>Narración del reel</dt>
+                <dd th:text="${s.voiceover}"></dd>
+                <dt>Titulares de las 3 fotos</dt>
+                <dd><ol><li th:each="h : ${s.headlines}" th:text="${h}"></li></ol></dd>
+                <dt>Llamado a la acción</dt>
+                <dd th:text="${s.callToAction}"></dd>
+                <dt>Texto del post</dt>
+                <dd><span th:text="${s.caption}"></span><br><span class="hashtags" th:text="${s.hashtags}"></span></dd>
+            </dl>
+            <form method="post" th:action="@{/campaigns/{id}/select(id=${campaign.id})}"
+                  th:if="${campaign.status.name() != 'PUBLISHED'}"
+                  data-loading="Generando 3 fotos y el video con FFmpeg…">
+                <input type="hidden" name="scriptId" th:value="${s.id}">
+                <button class="btn" th:classappend="${s.selected} ? 'secondary' : 'primary'" type="submit"
+                        th:text="${s.selected} ? 'Volver a generar' : 'Elegir este guion'">Elegir</button>
+            </form>
+            <span class="chosen" th:if="${s.selected}">✓ Guion elegido</span>
+        </article>
+    </div>
+
+    <section th:if="${video != null}">
+        <h2>Paso 4 · Contenido generado</h2>
+        <div class="assets">
+            <figure class="card" th:each="img : ${campaign.images}">
+                <a th:href="@{${img.localPath}}" target="_blank"><img th:src="@{${img.localPath}}" alt="Foto generada"></a>
+                <figcaption>Foto <span th:text="${img.position}"></span></figcaption>
+            </figure>
+            <figure class="card video">
+                <video th:src="@{${video.localPath}}" controls loop muted playsinline></video>
+                <figcaption>Reel (9:16)</figcaption>
+            </figure>
+        </div>
+
+        <div class="card publish" id="publicacion">
+            <div>
+                <h3>Publicar en Instagram</h3>
+                <p class="muted" th:unless="${instagramConfigured}">
+                    Instagram no está configurado: se registrará una publicación simulada.
+                </p>
+                <p class="muted" th:if="${instagramConfigured}">
+                    Se publicará un carrusel con las 3 fotos y un reel con el video. Puede tardar 1-2 minutos.
+                </p>
+            </div>
+            <form method="post" th:action="@{/campaigns/{id}/publish(id=${campaign.id})}"
+                  th:if="${campaign.status.name() != 'PUBLISHED'}"
+                  data-loading="Publicando en Instagram… (Instagram procesa el video, puede tardar 1-2 minutos)">
+                <button class="btn primary" type="submit">Publicar ahora</button>
+            </form>
+        </div>
+
+        <div class="publications" th:unless="${#lists.isEmpty(campaign.publications)}">
+            <div class="card pub" th:each="p : ${campaign.publications}" th:classappend="${#strings.toLowerCase(p.status)}">
+                <strong th:text="${p.platform} + ' · ' + ${p.kind}"></strong>
+                <span class="status" th:classappend="${#strings.toLowerCase(p.status)}" th:text="${p.status}"></span>
+                <p th:text="${p.message}"></p>
+                <a th:if="${p.permalink}" th:href="${p.permalink}" target="_blank" rel="noopener">Ver en Instagram ↗</a>
+            </div>
+        </div>
+    </section>
+</main>
+
+<div th:replace="~{fragments :: loading}"></div>
+<script th:replace="~{fragments :: loading-script}"></script>
+</body>
+</html>

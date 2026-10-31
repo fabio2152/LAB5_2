@@ -1,0 +1,45 @@
+server:
+  port: ${SERVER_PORT:8080}
+
+spring:
+  application:
+    name: marketing-ai
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:marketing}
+    username: ${DB_USER:marketing}
+    password: ${DB_PASSWORD:marketing}
+  jpa:
+    hibernate:
+      ddl-auto: update
+  servlet:
+    multipart:
+      max-file-size: 15MB
+      max-request-size: 16MB
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+
+app:
+  # Carpeta donde se guardan la foto original, las 3 fotos y el video (volumen Docker)
+  storage-dir: ${STORAGE_DIR:./data/media}
+  # URL pública de la app; se usa para armar las URLs de los medios si no hay S3
+  public-base-url: ${PUBLIC_BASE_URL:http://localhost:8080}
+  ffmpeg-path: ${FFMPEG_PATH:ffmpeg}
+
+  claude:
+    api-key: ${ANTHROPIC_API_KEY:}
+    model: ${CLAUDE_MODEL:claude-opus-5-5}
+
+  s3:
+    bucket: ${S3_BUCKET:}
+    region: ${AWS_REGION:us-east-1}
+    # Opcional: URL base pública (p. ej. CloudFront). Si se deja vacío se usa https://<bucket>.s3.<region>.amazonaws.com
+    public-url: ${S3_PUBLIC_URL:}
+
+  instagram:
+    access-token: ${INSTAGRAM_ACCESS_TOKEN:}
+    user-id: ${INSTAGRAM_USER_ID:}
+    graph-url: ${INSTAGRAM_GRAPH_URL:https://graph.instagram.com/v23.0}

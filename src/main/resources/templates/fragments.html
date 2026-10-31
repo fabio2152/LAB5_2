@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head th:fragment="head(title)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${title} + ' · Marketing AI'">Marketing AI</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+
+<header th:fragment="header" class="topbar">
+    <a class="brand" th:href="@{/}">
+        <span class="brand-mark">◆</span> Marketing&nbsp;AI
+    </a>
+    <div class="badges">
+        <span class="badge" th:classappend="${demoMode} ? 'warn' : 'ok'"
+              th:text="${demoMode} ? 'Claude: modo demo' : 'Claude conectado'"></span>
+        <span class="badge" th:classappend="${instagramConfigured} ? 'ok' : 'warn'"
+              th:text="${instagramConfigured} ? 'Instagram conectado' : 'Instagram: simulado'"></span>
+        <span class="badge" th:classappend="${s3Enabled} ? 'ok' : 'muted'"
+              th:text="${s3Enabled} ? 'S3 activo' : 'Almacenamiento local'"></span>
+    </div>
+</header>
+
+<div th:fragment="alerts">
+    <div class="alert error" th:if="${error}" th:text="${error}"></div>
+    <div class="alert success" th:if="${success}" th:text="${success}"></div>
+</div>
+
+<div th:fragment="loading" id="loading" class="loading" hidden>
+    <div class="spinner"></div>
+    <p id="loading-text">Procesando…</p>
+</div>
+
+<script th:fragment="loading-script">
+    document.querySelectorAll('form[data-loading]').forEach(form => {
+        form.addEventListener('submit', () => {
+            document.getElementById('loading-text').textContent = form.dataset.loading;
+            document.getElementById('loading').hidden = false;
+            form.querySelectorAll('button').forEach(b => b.disabled = true);
+        });
+    });
+</script>
+
+</body>
+</html>

@@ -16,7 +16,8 @@ services:
 
   app:
     build: .
-    image: marketing-ai:latest
+    # Imagen publicada en Docker Hub; en el servidor se descarga con "docker compose pull"
+    image: ${APP_IMAGE:-fabio2152/marketing-ai:latest}
     restart: unless-stopped
     depends_on:
       db:

@@ -217,44 +217,59 @@ IAM → *Roles → Create role* → *AWS service: EC2* → crea el rol `marketin
 }
 ```
 
-### 3. Instancia EC2
+### 3. Instancia EC2 (capa gratuita)
 
-- AMI: **Amazon Linux 2023**, tipo **t3.small** (2 GB de RAM, para compilar con Maven).
-- Key pair: crea uno y descarga el `.pem`.
+- AMI: **Ubuntu Server 24.04 LTS**, tipo **t3.micro** (apto para la capa gratuita).
+- Key pair: crea uno y descarga el `.pem` (nunca lo subas al repositorio).
 - Security group: entrada **SSH (22)** desde tu IP y **HTTP (80)** desde `0.0.0.0/0`.
 - Almacenamiento: 20 GB gp3.
-- *Advanced details → IAM instance profile*: `marketing-ai-ec2`.
+- *Detalles avanzados*: perfil de instancia IAM `marketing-ai-ec2`, metadatos *Solo V2* y **límite de saltos = 2** (para que el contenedor pueda usar el rol IAM).
 
-### 4. Instalar Docker y desplegar
+### 4. Publicar la imagen en Docker Hub (desde tu PC)
+
+La t3.micro tiene 1 GB de RAM, así que la imagen se compila en tu PC y el servidor solo la descarga:
 
 ```bash
-ssh -i marketing-ai.pem ec2-user@<IP-PUBLICA>
+docker login
+docker build -t fabio2152/marketing-ai:latest .
+docker push fabio2152/marketing-ai:latest
+```
 
-sudo dnf install -y docker git
-sudo systemctl enable --now docker
-sudo usermod -aG docker ec2-user
-sudo mkdir -p /usr/local/lib/docker/cli-plugins
-sudo curl -SL https://github.com/docker/compose/releases/download/v2.39.2/docker-compose-linux-x86_64 \
-     -o /usr/local/lib/docker/cli-plugins/docker-compose
-sudo chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
+### 5. Preparar el servidor
+
+```bash
+ssh -i marketing-ai.pem ubuntu@<IP-PUBLICA>
+
+# Docker + Docker Compose (script oficial de Docker)
+curl -fsSL https://get.docker.com | sudo sh
+sudo usermod -aG docker ubuntu
+
+# 2 GB de swap como reserva de memoria
+sudo fallocate -l 2G /swapfile && sudo chmod 600 /swapfile
+sudo mkswap /swapfile && sudo swapon /swapfile
+echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+
 exit   # vuelve a entrar para que aplique el grupo docker
 ```
 
+### 6. Desplegar
+
 ```bash
-ssh -i marketing-ai.pem ec2-user@<IP-PUBLICA>
+ssh -i marketing-ai.pem ubuntu@<IP-PUBLICA>
 git clone https://github.com/fabio2152/LAB5_2.git
 cd LAB5_2
 cp .env.example .env
-nano .env   # APP_PORT=80, PUBLIC_BASE_URL=http://<IP-PUBLICA>, S3_BUCKET, claves...
-docker compose up -d --build
+nano .env   # APP_PORT=80, PUBLIC_BASE_URL=http://<IP-PUBLICA>, S3_BUCKET, JAVA_OPTS=-Xmx512m, claves...
+docker compose pull app
+docker compose up -d --no-build
 ```
 
 La app queda en `http://<IP-PUBLICA>`.
 
-Para actualizar después de un cambio en el repositorio:
+Para actualizar después de publicar una nueva imagen:
 
 ```bash
-cd LAB5_2 && git pull && docker compose up -d --build
+cd LAB5_2 && git pull && docker compose pull app && docker compose up -d --no-build
 ```
 
 ---

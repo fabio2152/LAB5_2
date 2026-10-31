@@ -9,6 +9,17 @@ Aplicación web en **Java 21 + Spring Boot** que automatiza una campaña de mark
 
 Laboratorio 05 de Diseño de Software, Pregunta 2.
 
+## Requerimientos y dónde se cumplen
+
+| Requerimiento | Implementación |
+|---------------|----------------|
+| 1. Dockerfile para la aplicación | [`Dockerfile`](Dockerfile): build multi-stage (Maven → JRE 21 + FFmpeg). Imagen publicada en Docker Hub: [`fabio2152/marketing-ai`](https://hub.docker.com/r/fabio2152/marketing-ai) |
+| 2. docker-compose con la aplicación y la base de datos | [`docker-compose.yml`](docker-compose.yml): servicios `app` y `db` (PostgreSQL 16) con volúmenes persistentes |
+| 3. Variables de entorno | [`.env.example`](.env.example) (plantilla sin secretos) → `.env` en el servidor → [`application.yml`](src/main/resources/application.yml) lee cada variable |
+| 4. Despliegue en la nube | AWS: EC2 (Ubuntu 24.04, t3.micro) con Docker Compose + bucket S3 para las fotos y el video |
+
+> **Sobre Instagram:** la publicación está implementada con la Instagram Graph API ([`InstagramPublisher`](src/main/java/com/lab5/marketing/social/InstagramPublisher.java)). Activarla requiere una app de Meta y una cuenta profesional de Instagram; mientras no se configuren `INSTAGRAM_ACCESS_TOKEN` e `INSTAGRAM_USER_ID`, la app registra la publicación como **simulada** y el resto del flujo funciona igual.
+
 ---
 
 ## Arquitectura
@@ -119,14 +130,28 @@ Se configuran en el archivo `.env` (copia de `.env.example`). Ningún secreto se
 
 ### Pasos
 
-```bash
-git clone https://github.com/fabio2152/LAB5_2.git
-cd LAB5_2
-cp .env.example .env        # completa las claves que tengas
-docker compose up -d --build
-```
+1. Clona el repositorio:
 
-Abre <http://localhost:8080> (o el puerto que pusiste en `APP_PORT`).
+   ```bash
+   git clone https://github.com/fabio2152/LAB5_2.git
+   cd LAB5_2
+   ```
+
+2. Crea el archivo de variables de entorno a partir de la plantilla (en PowerShell usa `copy` en lugar de `cp`):
+
+   ```bash
+   cp .env.example .env
+   ```
+
+3. Edita `.env`: cambia `DB_PASSWORD` y, si la tienes, pega tu `ANTHROPIC_API_KEY`. Sin claves la app funciona en modo demo.
+
+4. Levanta la aplicación y la base de datos. `--build` compila la imagen localmente; para usar la de Docker Hub cambia `--build` por `--no-build` después de `docker compose pull app`:
+
+   ```bash
+   docker compose up -d --build
+   ```
+
+5. Abre <http://localhost:8080> (o el puerto que pusiste en `APP_PORT`).
 
 Comandos útiles:
 
@@ -273,6 +298,23 @@ cd LAB5_2 && git pull && docker compose pull app && docker compose up -d --no-bu
 ```
 
 ---
+
+## Verificar el despliegue
+
+Dentro del servidor (o en local) estos comandos muestran que la app corre en contenedores:
+
+```bash
+cd LAB5_2
+cat Dockerfile                 # definición de la imagen
+cat docker-compose.yml         # servicios app + db y volúmenes
+docker compose ps              # contenedores en ejecución
+docker images | grep marketing # imagen descargada de Docker Hub
+docker volume ls               # volúmenes persistentes (db-data, media-data)
+docker compose logs --tail 20 app
+curl http://localhost/actuator/health   # {"status":"UP"}
+```
+
+> No muestres el archivo `.env` en capturas ni videos: contiene la API key y la clave de la base de datos. Para enseñar las variables usa `.env.example`.
 
 ## Evidencias
 
